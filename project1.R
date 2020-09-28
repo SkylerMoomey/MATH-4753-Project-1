@@ -28,17 +28,7 @@ nrow(swdefects.tab) == defects.pd + notdefects.pd
 #total two-way summary table
 predictions <- with(swdefects.tab, (predict.vg.10 == "yes") | (predict.evg.14.5 == "yes")
                                       | (predict.ivg.9.2 == "yes") | (predict.loc.50 == "yes"))
-
-totals.tab <- table(predictions, swdefects.tab$defect)
-colnames(totals.tab) <- c("No Defect", "Defect")
-totals.tab
-
-#tables for each predictive factor
-
-#loc v defect
-
-loc.tab <- with(swdefects.tab, table(predict.loc.50, defect))
-
+predictions
 #takes a 4x4 table and a grand total and creates a two way summary table
 twowaysum <- function(tab, total)
 {
@@ -51,10 +41,48 @@ twowaysum <- function(tab, total)
   mat
 }
 
+totals.tab <- table(predictions, swdefects.tab$defect)
+
+twowaysum(totals.tab, nrow(swdefects.tab))
+
+##functions for probability measures.
+#function for accuracy
+acc=function(a,b,c,d){
+
+  accuracy = (a+d)/(a+b+c+d)
+  accuracy
+}
+
+#function for detection rate
+detect=function(b,d){
+
+  detection=d/(b+d)
+  detection
+}
+
+#function for false alarm rate
+falarm=function(a,c){
+
+  false_alarm=c/(a+c)
+  false_alarm
+}
+
+#function for precision
+prec=function(c,d){
+
+  precision=d/(c+d)
+  precision
+}
+
+#tables for each predictive factor
+
+#loc v defect
+
+loc.tab <- with(swdefects.tab, table(predict.loc.50, defect))
+
+
+
 twowaysum(loc.tab, nrow(swdefects.tab))
-
-
-addmargins(loc.tab)
 
 #cyclomatic complexity v defect
 cyclo.tab <- with(swdefects.tab, table(predict.vg.10, defect))

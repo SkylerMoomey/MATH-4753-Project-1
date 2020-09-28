@@ -29,94 +29,143 @@ output:
 abstract: This project is all about analysing the SWDEFECTS file using R and probability theory. You will need to change the headings to reflect the nature of the project intentions. Re write this abstract as the last thing you do.
 ---
 
-<center>
-
-![Dr. Wayne Stewart](wayne.jpg "My Picture"){ width=20% }
-
-</center>
-
-
----
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Introduction to the data
 
-## Data and variables(see MS pg. 77,125)
-Describe the data and the problem we wish to investigate.
+## Data and Variables
+In order to predict the reliability of large sets of software, engineers and computer scientists developed
+several algorithms. These 4 algorithms measure 4 different attributes of a given file. If these attributes exceed
+a given upper bound, different for each measurement, the algorithm predicts that file to have a defect. This data
+is stored in SWDEFECTS.csv.
 
 ## Summary Table 
 
-Create the summary table (TABLE SIA3.2) found on page 125.
+<center>
+Defect Predictions v Actual
+</center>
+```{r}
+#all data in table
+swdefects.tab <- read.csv("SWDEFECTS.csv")
 
-Using $\LaTeX$ construct the formulae for 
 
-1. Accuracy
-2. Detection rate
-3. False alarm rate
-4. Precision
+#total two-way summary table
+predictions <- with(swdefects.tab, (predict.vg.10 == "yes") | (predict.evg.14.5 == "yes")
+                                      | (predict.ivg.9.2 == "yes") | (predict.loc.50 == "yes"))
 
-Latex Example: See (http://www.stat.cmu.edu/~cshalizi/rmarkdown/#elements-of-math-mode)
+#takes a 4x4 table and a grand total and creates a two way summary table
+twowaysum <- function(tab, total)
+{
+  mat = matrix(c(tab[1, 1], tab[1, 2], I(tab[1,1] + tab[1,2])
+                 ,tab[2, 1], tab[2,2], I(tab[2,1] + tab[2, 2])
+                 , I(tab[1,1] + tab[2,1]), I(tab[1,2] + tab[2,2]), total)
+               , ncol=3,byrow=TRUE)
+  colnames(mat) = c("No Defect", "Defect", "Row Totals")
+  rownames(mat) = c("Not Predicted", "Predicted", "Column Totals")
+  mat
+}
 
-$$
-\begin{eqnarray}
-P(|X-\mu| > k) & = & P(|X-\mu|^2 > k^2)\\
-& \leq & \frac{\mathbb{E}\left[|X-\mu|^2\right]}{k^2}\\
-& \leq & \frac{\mathrm{Var}[X]}{k^2}
-\end{eqnarray}
-$$
+totals.tab <- table(predictions, swdefects.tab$defect)
+
+twowaysum(totals.tab, nrow(swdefects.tab))
+```
+
+
+## Formulae
+
+1. Accuracy: $P($Algorithm is correct$)=\frac{(a+d)}{(a+b+c+d)}\\$
+2. Detection rate: $P($predict defect|module has defect$)=\frac{d}{(b+d)}\\$
+3. False alarm rate: $P($predict defect|module has no defect$)=\frac{c}{(a+c)}\\$
+4. Precision: $P($module has defect|predict defect$)=\frac{d}{(c+d)}$
 
 # R functions
-Using the above definitions make R functions that will create the required probabilities, please remove `eval=FALSE` when creating the functions :
-
-```{r accuracy, eval=FALSE}
+R functions for the same probability measures:
+```{r accuracy}
 acc=function(a,b,c,d)
 {
-  
+  accuracy = (a+d)/(a+b+c+d)
+  accuracy
 }
 ```
 
-```{r detecton, eval=FALSE}
+```{r detecton}
 detect=function(b,d)
 {
-  
+  detection=d/(b+d)
+  detection
 }
 ```
 
-```{r alarm, eval=FALSE}
+```{r alarm}
 falarm=function(a,c)
 {
-  
+  false_alarm=c/(a+c)
+  false_alarm
 }
 ```
 
-```{r precision, eval=FALSE}
+```{r precision}
 prec=function(c,d)
 {
-  
+  precision=d/(c+d)
+  precision
 }
 ```
 
 
-# Create the tables in Figure SIA3.1
+# Tables in Figure SIA3.1
+Two-way Summary tables for each predictive factor.
 
-The tables do not have to be formatted exactly as those in the book. Have the functions produce a suitable barplot also. 
-
-As a guide and help -- see code below
-
+Lines of Code v Defect:
 ```{r }
-swd=read.csv("swdefects.csv")
-head(swd)
-tab=with(swd, table(predict.loc.50,defect))
-barplot(tab, beside=TRUE, leg=TRUE)
-tab2=addmargins(tab)
-tab2
+#loc v defect
+
+loc.tab <- with(swdefects.tab, table(predict.loc.50, defect))
+
+twowaysum(loc.tab, nrow(swdefects.tab))
+
+barplot(loc.tab, beside=TRUE, leg=TRUE, col=4:5,
+        ylab="Number of Predictions", xlab="Defect Present")
+title(main= "Lines of Code Test")
 ```
 
+Cyclomatic Complexity v Defect:
+```{r}
+#cyclomatic complexity v defect
+cyclo.tab <- with(swdefects.tab, table(predict.vg.10, defect))
 
+twowaysum(cyclo.tab, nrow(swdefects.tab))
 
+barplot(cyclo.tab, beside=TRUE, leg=TRUE, col=6:7,
+        ylab="Number of Predictions", xlab="Defect Present")
+title(main="Cyclomatic Complexity Test")
+```
+
+Essential Complexity v Defect:
+```{r}
+#essential complexity v defect
+evg.tab <- with(swdefects.tab, table(predict.evg.14.5, defect))
+
+twowaysum(evg.tab, nrow(swdefects.tab))
+
+barplot(evg.tab, beside=TRUE, leg=TRUE, col=11:12,
+        ylab="Number of Predictions", xlab="Defect Present")
+title(main="Essential Complexity Test")
+```
+
+Design Complexity v Defect:
+```{r}
+#design complexity v defect
+ivg.tab <- with(swdefects.tab, table(predict.ivg.9.2, defect))
+
+twowaysum(ivg.tab, nrow(swdefects.tab))
+
+barplot(ivg.tab, beside=TRUE, leg=TRUE, col=2:3,
+        ylab="Number of Predictions", xlab="Defect Present")
+title(main="Design Complexity Test")
+```
 
 
 # Create the corrected table on page 127 (there are mistakes in it), TABLE SIA3.3
@@ -139,6 +188,4 @@ The function will need to create two things
     1. A barplot of the table
     2. Commandline output in the form of a list containing the table
     
-    
-![](barplot.png){ width=70% }
 
