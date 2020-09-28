@@ -39,26 +39,36 @@ totals.tab
 
 loc.tab <- with(swdefects.tab, table(predict.loc.50, defect))
 
-mat = matrix(c(loc.tab[1, 1], loc.tab[1, 2], I(loc.tab[1,1] + loc.tab[1,2])
-        ,loc.tab[2, 1], loc.tab[2,2], I(loc.tab[2,1] + loc.tab[2, 2])
-        , I(loc.tab[1,1] + loc.tab[2,1]), I(loc.tab[1,2] + loc.tab[2,2]), nrow(swdefects.tab))
-        , ncol=3,byrow=TRUE)
-colnames(mat) = c("No Defect", "Defect", "Row Totals")
-rownames(mat) = c("Not Predicted", "Predicted", "Column Totals")
-mat
+#takes a 4x4 table and a grand total and creates a two way summary table
+twowaysum <- function(tab, total)
+{
+  mat = matrix(c(tab[1, 1], tab[1, 2], I(tab[1,1] + tab[1,2])
+                 ,tab[2, 1], tab[2,2], I(tab[2,1] + tab[2, 2])
+                 , I(tab[1,1] + tab[2,1]), I(tab[1,2] + tab[2,2]), total)
+               , ncol=3,byrow=TRUE)
+  colnames(mat) = c("No Defect", "Defect", "Row Totals")
+  rownames(mat) = c("Not Predicted", "Predicted", "Column Totals")
+  mat
+}
+
+twowaysum(loc.tab, nrow(swdefects.tab))
+
 
 addmargins(loc.tab)
 
 #cyclomatic complexity v defect
 cyclo.tab <- with(swdefects.tab, table(predict.vg.10, defect))
-cyclo.tab
+
+twowaysum(cyclo.tab, nrow(swdefects.tab))
 
 #essential complexity v defect
 evg.tab <- with(swdefects.tab, table(predict.evg.14.5, defect))
-evg.tab
+
+twowaysum(evg.tab, nrow(swdefects.tab))
 
 #design complexity v defect
 ivg.tab <- with(swdefects.tab, table(predict.ivg.9.2, defect))
-ivg.tab
+
+twowaysum(ivg.tab, nrow(swdefects.tab))
 
 
